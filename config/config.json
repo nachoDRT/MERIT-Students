@@ -1,0 +1,19 @@
+{
+    "age_groups": {
+        "10_to_19": 2,
+        "20_to_29": 3,
+        "30_to_39": 4
+    },
+    "origins": {
+        "east_asian": 0,
+        "indian": 1,
+        "black": 2,
+        "white": 3,
+        "middle_eastern": 4,
+        "latino": 5
+    },
+    "genders": {
+        "men": 0,
+        "women": 1
+    }
+}
