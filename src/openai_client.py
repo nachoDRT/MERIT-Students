@@ -3,9 +3,11 @@ from openai import OpenAI
 from os.path import join, abspath, dirname
 from typing import Dict
 from utils import *
+from PIL import Image
+import io
 
 
-class openaiDiscriminator:
+class openaiClient:
 
     def __init__(self):
 
@@ -59,6 +61,42 @@ class openaiDiscriminator:
         reason_text = data["reason"]
 
         return decision_bool, reason_text
+
+    def generate_id_photo(self, b64_src: str) -> Image.Image:
+
+        prompt = (
+            "Passport-style photo: same person as in the reference, front-facing, "
+            "neutral expression, shoulders visible, pure white background, studio lighting."
+        )
+
+        response = self.client.responses.create(
+            model="gpt-4.1",
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": prompt},
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/jpeg;base64,{b64_src}",
+                        },
+                    ],
+                }
+            ],
+            tools=[{"type": "image_generation"}],
+        )
+
+        image_generation_calls = [output for output in response.output if output.type == "image_generation_call"]
+
+        image_data = [output.result for output in image_generation_calls]
+
+        if image_data:
+            image_base64 = image_data[0]
+            # with open("gift-basket.png", "wb") as f:
+            #     f.write(base64.b64decode(image_base64))
+            return Image.open(io.BytesIO(base64.b64decode(image_base64))).convert("RGB")
+        else:
+            print(response.output.content)
 
 
 def init_apis():

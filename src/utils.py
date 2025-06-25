@@ -2,6 +2,7 @@ import json
 from os.path import join, dirname, abspath
 from io import BytesIO
 import base64
+from typing import List, Dict
 
 
 def read_json(path: str):
@@ -31,3 +32,29 @@ def encode_image(img):
     img_bytes = buffered.getvalue()
 
     return base64.b64encode(img_bytes).decode("utf-8")
+
+
+def take_first(dataset):
+    taken = dataset.select(range(1))
+    remaining = dataset.select(range(1, len(dataset)))
+
+    return taken, remaining
+
+
+def get_subset_and_age_group(ff_subsets: Dict, ff_origin: str, gender: str, age_priority: List):
+    subset = None
+    used_age_group = None
+
+    for age_group in age_priority:
+        key = f"{ff_origin}_{gender}_{age_group}"
+        candidate = ff_subsets.get(key)
+        if candidate and len(candidate):
+            subset = candidate
+            used_age_group = age_group
+            break
+
+    if subset is None:
+        print(f"No remaining images for {ff_origin} {gender}")
+        return None, None
+
+    return subset, used_age_group
