@@ -1,0 +1,13 @@
+{
+    "english_origin_map": {
+        "english": "white",
+        "spanish": "latino",
+        "chinese": "east_asian",
+        "indian": "indian"
+    },
+    "spanish_origin_map": {
+        "spanish": "white",
+        "arabic": "middle_eastern",
+        "subsaharian_africa": "black"
+    }
+}
