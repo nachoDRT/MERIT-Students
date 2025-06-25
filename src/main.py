@@ -2,23 +2,13 @@ import pandas as pd
 from os.path import join, dirname, abspath
 from datasets import load_dataset
 from PIL import Image as PÌLIMage
-import json
+from utils import *
+from utils_hf import *
 
 
 NUM_PROC = 8
 
-
-def read_json(path: str):
-    with open(path, "r") as f:
-        return json.load(f)
-
-
-def load_config():
-    config_path = join(dirname(dirname(abspath(__file__))), "config", "config.json")
-    return read_json(config_path)
-
-
-config = load_config()
+config = load_config("config_fairface.json")
 AGE_GROUPS = config["age_groups"]
 ORIGINS = config["origins"]
 GENDERS = config["genders"]
@@ -31,7 +21,15 @@ def get_merit_data() -> pd.DataFrame:
     try:
 
         df = pd.read_csv(blueprint_path)
-        cols = ["file_name", "student_name", "student_gender", "student_name_origin"]
+        cols = [
+            "file_name",
+            "language",
+            "student_name",
+            "student_index",
+            "student_gender",
+            "student_name_origin",
+            "average_grade",
+        ]
         relevant_columns = df[cols]
 
         return relevant_columns
@@ -40,7 +38,7 @@ def get_merit_data() -> pd.DataFrame:
         print(f"Merit dataset blueprint not found.")
 
 
-def get_fair_face_subsets(decode=None):
+def get_fair_face_subsets(decode=False):
 
     print("Loading Fair Face Dataset")
     fair_face_dataset = load_dataset("HuggingFaceM4/FairFace", "1.25", split="train")
@@ -67,12 +65,42 @@ def get_fair_face_subsets(decode=None):
     return subsets
 
 
+def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
+
+    english_map = load_config("config_merit.json")["english_origin_map"]
+    spanish_map = load_config("config_merit.json")["spanish_origin_map"]
+
+    age_group = "10_to_19"
+
+    for i, row in enumerate(merit_df.itertuples(index=False)):
+        name = row.file_name
+        index = row.student_index
+        gender = row.student_gender
+        name_origin = row.student_name_origin
+        grade = row.average_grade
+
+        system = row.language
+
+        ff_origin = map_origin(system, name_origin, english_map, spanish_map)
+
+        fairface_key = f"{ff_origin}_{gender}_{age_group}"
+
+        subset = fair_face_subsets.get(fairface_key)
+        example = subset[i]["image"]
+        example.show()
+
+        if i > 10:
+            break
+
+
 if __name__ == "__main__":
 
     merit_df = get_merit_data()
     fair_face_subsets = get_fair_face_subsets()
 
-    east_asian_women_20_to_29 = fair_face_subsets["east_asian_women_20_to_29"]
-    latino_men_10_to_19 = fair_face_subsets["latino_men_10_to_19"]
-    print(f"Num of young_students_men: {len(east_asian_women_20_to_29)}")
-    print(f"Num of young_students_women: {len(latino_men_10_to_19)}")
+    link_student_to_id_pic(merit_df, fair_face_subsets)
+
+    # east_asian_women_20_to_29 = fair_face_subsets["east_asian_women_20_to_29"]
+    # latino_men_10_to_19 = fair_face_subsets["latino_men_10_to_19"]
+    # print(f"Num of young_students_men: {len(east_asian_women_20_to_29)}")
+    # print(f"Num of young_students_women: {len(latino_men_10_to_19)}")
