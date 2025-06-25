@@ -13,7 +13,7 @@
         "latino": 5
     },
     "genders": {
-        "men": 0,
-        "women": 1
+        "male": 0,
+        "female": 1
     }
 }
