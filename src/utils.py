@@ -1,5 +1,7 @@
 import json
 from os.path import join, dirname, abspath
+from io import BytesIO
+import base64
 
 
 def read_json(path: str):
@@ -20,3 +22,12 @@ def map_origin(system: str, name_origin: str, english_map: dict, spanish_map: di
         return spanish_map[name_origin]
     else:
         raise ValueError("System option not implemented.")
+
+
+def encode_image(img):
+
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    img_bytes = buffered.getvalue()
+
+    return base64.b64encode(img_bytes).decode("utf-8")

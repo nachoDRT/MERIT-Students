@@ -4,6 +4,7 @@ from datasets import load_dataset
 from PIL import Image as PÌLIMage
 from utils import *
 from utils_hf import *
+from openai_discriminator import openaiDiscriminator
 
 
 NUM_PROC = 8
@@ -72,6 +73,8 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
 
     age_group = "10_to_19"
 
+    discriminator = openaiDiscriminator()
+
     for i, row in enumerate(merit_df.itertuples(index=False)):
         name = row.file_name
         index = row.student_index
@@ -86,8 +89,13 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
         fairface_key = f"{ff_origin}_{gender}_{age_group}"
 
         subset = fair_face_subsets.get(fairface_key)
-        example = subset[i]["image"]
-        example.show()
+        ff_image = subset[i]["image"]
+        ff_image.show()
+
+        ff_encoded_image = encode_image(ff_image)
+        decission = discriminator.process_image(ff_encoded_image)
+
+        print(f"{decission} for image {i}:")
 
         if i > 10:
             break
