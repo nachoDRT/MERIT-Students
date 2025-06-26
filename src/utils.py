@@ -4,6 +4,7 @@ from io import BytesIO
 import base64
 from typing import List, Dict
 import pandas as pd
+import ast
 
 
 def read_json(path: str):
@@ -35,9 +36,15 @@ def encode_image(img):
     return base64.b64encode(img_bytes).decode("utf-8")
 
 
-def take_first(dataset):
-    taken = dataset.select(range(1))
-    remaining = dataset.select(range(1, len(dataset)))
+def take_first(dataset, n=1):
+    size = len(dataset)
+    n = min(n, size)
+
+    taken = dataset.select(range(n))
+    if n == size:
+        remaining = dataset.select([])
+    else:
+        remaining = dataset.select(range(n, size))
 
     return taken, remaining
 
@@ -61,13 +68,31 @@ def get_subset_and_age_group(ff_subsets: Dict, ff_origin: str, gender: str, age_
     return subset, used_age_group
 
 
+def unpack_singleton(value, cast=float):
+    if isinstance(value, list):
+        return cast(value[0])
+
+    if isinstance(value, str):
+        try:
+            parsed = ast.literal_eval(value)
+            if isinstance(parsed, list):
+                return cast(parsed[0])
+        except (ValueError, SyntaxError):
+            pass
+
+    return cast(value)
+
+
 def one_student_per_row(merit_df: pd.DataFrame):
-    merit_df["average_grade"] = merit_df["average_grade"].str[0]
+    df = merit_df.copy()
 
-    agg_funcs = {col: "first" for col in merit_df.columns if col != "average_grade"}
+    df["average_grade"] = df["average_grade"].apply(unpack_singleton)
 
+    agg_funcs = {col: "first" for col in df.columns if col != "average_grade"}
     agg_funcs["average_grade"] = "mean"
 
-    students_df = merit_df.groupby("student_name", as_index=False).agg(agg_funcs)
+    students_df = df.groupby("student_name", as_index=False).agg(agg_funcs)
+
+    students_df = students_df.sort_values("student_index", ascending=True).reset_index(drop=True)
 
     return students_df

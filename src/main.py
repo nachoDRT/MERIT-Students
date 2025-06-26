@@ -5,7 +5,7 @@ from PIL import Image as PÌLImage
 from utils import *
 from utils_hf import *
 from openai_client import openaiClient
-import tqdm as tqdm
+from tqdm import tqdm
 
 
 NUM_PROC = 8
@@ -16,6 +16,8 @@ AGE_GROUPS = config["age_groups"]
 ORIGINS = config["origins"]
 GENDERS = config["genders"]
 
+PROCESS_IMG = False
+
 
 def get_merit_data() -> pd.DataFrame:
 
@@ -25,7 +27,6 @@ def get_merit_data() -> pd.DataFrame:
 
         df = pd.read_csv(blueprint_path)
         cols = [
-            "file_name",
             "language",
             "student_name",
             "student_index",
@@ -76,14 +77,23 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
 
     discriminator = openaiClient()
 
-    for i, row in enumerate(merit_df.itertuples(index=False)):
+    images_bytes = []
+    names = []
+    indices = []
+    genders = []
+    name_origins = []
+    grades = []
+    systems = []
+
+    for i, row in tqdm(enumerate(merit_df.itertuples(index=False))):
         ff_origin = map_origin(row.language, row.student_name_origin, english_map, spanish_map)
 
-        name = row.file_name
+        name = row.student_name
         index = row.student_index
         gender = row.student_gender
         name_origin = row.student_name_origin
         grade = row.average_grade
+        system = row.language
 
         subset, used_age_group = get_subset_and_age_group(fair_face_subsets, ff_origin, gender, AGE_PRIORITY)
 
@@ -91,17 +101,38 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
         fair_face_subsets[f"{ff_origin}_{gender}_{used_age_group}"] = remaining
 
         ff_image = taken[0]["image"]
-        ff_image.show()
+        # ff_image.show()
 
-        ff_encoded = encode_image(ff_image)
-        decision, reason = discriminator.process_image(ff_encoded)
-        print(f"Image {i}. {decision}: {reason}. Group: {ff_origin}_{gender}_{used_age_group}")
+        if PROCESS_IMG:
+            ff_encoded = encode_image(ff_image)
+            decision, reason = discriminator.process_image(ff_encoded)
+            print(f"Image {i}. {decision}: {reason}. Group: {ff_origin}_{gender}_{used_age_group}")
 
-        # new_img = discriminator.generate_id_photo(ff_encoded)
-        # new_img.show()
+            # new_img = discriminator.generate_id_photo(ff_encoded)
+            # new_img.show()
 
-        if i > 10:
-            break
+        buffer = BytesIO()
+        ff_image.save(buffer, format="PNG")
+        images_bytes.append(buffer.getvalue())
+        names.append(name)
+        indices.append(index)
+        genders.append(gender)
+        name_origins.append(name_origin)
+        grades.append(grade)
+        systems.append(system)
+
+        # if i > 10:
+        #     break
+
+    return {
+        "id_image": images_bytes,
+        "student_name": names,
+        "student_index": indices,
+        "student_gender": genders,
+        "student_name_origin": name_origins,
+        "average_grade": grades,
+        "system": systems,
+    }
 
 
 if __name__ == "__main__":
@@ -109,4 +140,8 @@ if __name__ == "__main__":
     merit_df = get_merit_data()
     fair_face_subsets = get_fair_face_subsets()
 
-    link_student_to_id_pic(merit_df, fair_face_subsets)
+    subset = link_student_to_id_pic(merit_df, fair_face_subsets)
+
+    dataset = [("train", subset)]
+    dataset = format_data(dict(dataset))
+    push_dataset_to_hf(dataset, "merit-students")
