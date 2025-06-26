@@ -61,7 +61,7 @@ def get_subset_and_age_group(ff_subsets: Dict, ff_origin: str, gender: str, age_
     return subset, used_age_group
 
 
-def one_student_per_row(merit_df: pd.Dataframe):
+def one_student_per_row(merit_df: pd.DataFrame):
     merit_df["average_grade"] = merit_df["average_grade"].str[0]
 
     agg_funcs = {col: "first" for col in merit_df.columns if col != "average_grade"}
