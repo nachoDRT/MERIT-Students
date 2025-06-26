@@ -3,6 +3,7 @@ from os.path import join, dirname, abspath
 from io import BytesIO
 import base64
 from typing import List, Dict
+import pandas as pd
 
 
 def read_json(path: str):
@@ -58,3 +59,15 @@ def get_subset_and_age_group(ff_subsets: Dict, ff_origin: str, gender: str, age_
         return None, None
 
     return subset, used_age_group
+
+
+def one_student_per_row(merit_df: pd.Dataframe):
+    merit_df["average_grade"] = merit_df["average_grade"].str[0]
+
+    agg_funcs = {col: "first" for col in merit_df.columns if col != "average_grade"}
+
+    agg_funcs["average_grade"] = "mean"
+
+    students_df = merit_df.groupby("student_name", as_index=False).agg(agg_funcs)
+
+    return students_df

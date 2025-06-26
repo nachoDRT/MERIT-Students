@@ -34,6 +34,7 @@ def get_merit_data() -> pd.DataFrame:
             "average_grade",
         ]
         relevant_columns = df[cols]
+        relevant_columns = one_student_per_row(relevant_columns)
 
         return relevant_columns
 
