@@ -69,6 +69,7 @@ class openaiClient:
             "Create a passport-style picture: same person as in the reference, front-facing, "
             "neutral expression, shoulders visible, pure white background, studio lighting."
             "ultra realistic style, avoid perfect or canonical physical human-aspect features"
+            "Do NOT add text, watermarks, filters, artistic effects, accessories, headwear, glasses, hands. "
             "avoid any content that might arise moderation_blocked error"
         )
 
