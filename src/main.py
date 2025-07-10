@@ -106,10 +106,11 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
         if PROCESS_IMG:
             ff_encoded = encode_image(ff_image)
             decision, reason = discriminator.process_image(ff_encoded)
-            print(f"Image {i}. {decision}: {reason}. Group: {ff_origin}_{gender}_{used_age_group}")
+            print(f" Image {i}. {decision}: {reason}. Group: {ff_origin}_{gender}_{used_age_group}")
 
-            # new_img = discriminator.generate_id_photo(ff_encoded)
-            # new_img.show()
+            new_img = discriminator.generate_id_photo(ff_encoded, ff_origin, gender, used_age_group)
+            new_img.show()
+            ff_image.show()
 
         buffer = BytesIO()
         ff_image.save(buffer, format="PNG")

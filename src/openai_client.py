@@ -62,14 +62,18 @@ class openaiClient:
 
         return decision_bool, reason_text
 
-    def generate_id_photo(self, b64_src: str) -> Image.Image:
+    def generate_id_photo(self, b64_src: str, ff_origin: str, gender: str, age_group: str) -> Image.Image:
 
         prompt = (
-            "Passport-style photo: same person as in the reference, front-facing, "
+            f"The subject is a {gender} with {ff_origin} features in the age range of {age_group} years old"
+            "Create a passport-style picture: same person as in the reference, front-facing, "
             "neutral expression, shoulders visible, pure white background, studio lighting."
+            "ultra realistic style, avoid perfect or canonical physical human-aspect features"
+            "avoid any content that might arise moderation_blocked error"
         )
 
         response = self.client.responses.create(
+            # model="gpt-image-1",
             model="gpt-4.1",
             input=[
                 {
@@ -83,7 +87,7 @@ class openaiClient:
                     ],
                 }
             ],
-            tools=[{"type": "image_generation"}],
+            tools=[{"type": "image_generation", "quality": "high", "size": "1024x1024", "moderation": "low"}],
         )
 
         image_generation_calls = [output for output in response.output if output.type == "image_generation_call"]
@@ -92,8 +96,6 @@ class openaiClient:
 
         if image_data:
             image_base64 = image_data[0]
-            # with open("gift-basket.png", "wb") as f:
-            #     f.write(base64.b64decode(image_base64))
             return Image.open(io.BytesIO(base64.b64decode(image_base64))).convert("RGB")
         else:
             print(response.output.content)
