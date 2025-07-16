@@ -1,2 +1,4 @@
 *.pyc
 config/secrets.json
+src/input
+src/output

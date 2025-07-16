@@ -5,7 +5,11 @@ from PIL import Image as PÌLImage
 from utils import *
 from utils_hf import *
 from openai_client import openaiClient
+from flux_pipeline import fluxPipeline
 from tqdm import tqdm
+import os
+from huggingface_hub import login
+
 
 
 NUM_PROC = 8
@@ -16,7 +20,7 @@ AGE_GROUPS = config["age_groups"]
 ORIGINS = config["origins"]
 GENDERS = config["genders"]
 
-PROCESS_IMG = False
+PROCESS_IMG_OPENAI = False
 
 
 def get_merit_data() -> pd.DataFrame:
@@ -75,7 +79,10 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
     english_map = load_config("config_merit.json")["english_origin_map"]
     spanish_map = load_config("config_merit.json")["spanish_origin_map"]
 
-    discriminator = openaiClient()
+    if PROCESS_IMG_OPENAI:
+        openai_client = openaiClient()
+    else:
+        flux_pipeline = fluxPipeline()
 
     images_bytes = []
     names = []
@@ -103,14 +110,17 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
         ff_image = taken[0]["image"]
         # ff_image.show()
 
-        if PROCESS_IMG:
+        if PROCESS_IMG_OPENAI:
             ff_encoded = encode_image(ff_image)
-            decision, reason = discriminator.process_image(ff_encoded)
+            decision, reason = openai_client.process_image(ff_encoded)
             print(f" Image {i}. {decision}: {reason}. Group: {ff_origin}_{gender}_{used_age_group}")
 
-            new_img = discriminator.generate_id_photo(ff_encoded, ff_origin, gender, used_age_group)
+            new_img = openai_client.generate_id_photo(ff_encoded, ff_origin, gender, used_age_group)
             new_img.show()
             ff_image.show()
+        
+        else:
+            flux_pipeline.generate_image(ff_image, ff_origin, gender, used_age_group)
 
         buffer = BytesIO()
         ff_image.save(buffer, format="PNG")
@@ -138,6 +148,7 @@ def link_student_to_id_pic(merit_df: pd.DataFrame, fair_face_subsets: dict):
 
 if __name__ == "__main__":
 
+    login(token=os.getenv("HUGGINGFACE_HUB_TOKEN"))
     merit_df = get_merit_data()
     fair_face_subsets = get_fair_face_subsets()
 

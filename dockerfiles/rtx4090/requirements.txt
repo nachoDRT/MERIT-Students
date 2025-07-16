@@ -1,0 +1,8 @@
+transformers
+accelerate
+pandas
+openai
+datasets
+sentencepiece
+protobuf
+bitsandbytes
