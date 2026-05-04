@@ -2,3 +2,4 @@
 config/secrets.json
 src/input
 src/output
+inference/qwen3/data
