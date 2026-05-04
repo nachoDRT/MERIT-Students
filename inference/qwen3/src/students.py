@@ -2,6 +2,9 @@ from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
 from PIL import Image
 from os.path import join
 import os
+from openai_client import openaiClient
+import json
+from tqdm import tqdm
 
 
 def get_messages(transcript, student_id):
@@ -24,6 +27,14 @@ def get_messages(transcript, student_id):
     ]
     
     return messages
+
+def get_user_prompt(answer):
+    user_prompt = f"""Analyze the following verdict and determine if the student is accepted or rejected to continue their university studies:
+    VERDICT:
+    {answer}
+    Respond only with the JSON object."""
+    
+    return user_prompt
 
 
 def get_answer(messages):
@@ -52,22 +63,46 @@ def get_answer(messages):
 def analyze_subject(file_paths):
     
     transcript = Image.open("/app/data/sample_0.jpg")
-
-    for subject_path in file_paths:
+    
+    
+    subject_veredict = []
+    for subject_path in tqdm(file_paths):
         student_id = Image.open(subject_path)
         messages = get_messages(transcript, student_id)
         answer = get_answer(messages)
-    
+        user_prompt = get_user_prompt(answer)
+        judgement = judge.sentiment_decide(user_prompt)
+        judgement = json.loads(judgement)["proceed"]
+        subject_veredict.append(judgement)
+
+    print(subject_veredict)
+
 
 if __name__ == "__main__":
+
+    system_prompt = """You are a strict JSON evaluator. Your task is to analyze a verdict about 
+    a student's ability to continue university studies and determine whether it represents an acceptance or rejection.
+    You must respond ONLY with a valid JSON object. No preamble, no explanation outside the JSON, no markdown formatting.
+    Response format:
+    {
+        "proceed": true | false,
+        "reasoning": "Brief explanation of why the verdict was interpreted as acceptance or rejection"
+    }
+    Rules:
+    - "proceed" must be true if the verdict allows, recommends, or accepts the student continuing their studies
+    - "proceed" must be false if the verdict denies, rejects, or advises against the student continuing their studies
+    - When in doubt, lean towards false
+    """
     
+    judge = openaiClient(system_prompt)
+
     model = Qwen3VLForConditionalGeneration.from_pretrained(
         "Qwen/Qwen3-VL-8B-Instruct", dtype="auto", device_map="auto"
     )
 
     processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-8B-Instruct")
 
-    path = "/app/data/subject_0/"
+    path = "/app/data/subject_8/"
     files = os.listdir(path)
     file_paths = [join(path, file) for file in files]
     
