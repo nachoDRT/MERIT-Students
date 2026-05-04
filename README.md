@@ -12,3 +12,5 @@ docker build -f dockerfiles/rtx4090/Dockerfile -t merit-students .
 ```bash
 docker run -it --gpus device=0 -v "$HOME/.cache/huggingface":/root/.cache/huggingface -v "$(pwd)/src/output":/app/src/output --ipc=host merit-students
 ```
+
+# Biases Detection - WIP
