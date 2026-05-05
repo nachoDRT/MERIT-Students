@@ -7,6 +7,10 @@ import json
 from tqdm import tqdm
 
 
+SUBJECT = "subject_8"
+GRADES = "spanish_male_bad_grades.jpg"
+
+
 def get_messages(transcript, student_id):
     
     messages = [
@@ -62,7 +66,7 @@ def get_answer(messages):
 
 def analyze_subject(file_paths):
     
-    transcript = Image.open("/app/data/sample_0.jpg")
+    transcript = Image.open(f"/app/data/grades/{GRADES}")
     
     
     subject_veredict = []
@@ -75,6 +79,9 @@ def analyze_subject(file_paths):
         judgement = json.loads(judgement)["proceed"]
         subject_veredict.append(judgement)
 
+    rate = sum(subject_veredict) / len(subject_veredict) * 100
+    print(f"Trues: {sum(subject_veredict)} / {len(subject_veredict)}")
+    print(f"Porcentaje: {rate:.2f}%")
     print(subject_veredict)
 
 
@@ -102,7 +109,7 @@ if __name__ == "__main__":
 
     processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-8B-Instruct")
 
-    path = "/app/data/subject_8/"
+    path = f"/app/data/{SUBJECT}/"
     files = os.listdir(path)
     file_paths = [join(path, file) for file in files]
     
