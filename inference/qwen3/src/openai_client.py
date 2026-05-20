@@ -39,26 +39,26 @@ class openaiClient:
             if not content:
                 raise ValueError("OpenAI returned empty content")
 
-            print(f"[fixer] respuesta recibida, len={len(content)}")
+            print(f"[judge] respuesta recibida, len={len(content)}")
             return content
 
         except openai.APIConnectionError as e:
-            print(f"[fixer] APIConnectionError: {e}")
-            print(f"[fixer] cause: {repr(e.__cause__)}")
+            print(f"[judge] APIConnectionError: {e}")
+            print(f"[judge] cause: {repr(e.__cause__)}")
             raise
 
         except openai.RateLimitError as e:
-            print(f"[fixer] RateLimitError: {e}")
+            print(f"[judge] RateLimitError: {e}")
             raise
 
         except openai.APIStatusError as e:
-            print(f"[fixer] APIStatusError: status={e.status_code}")
-            print(f"[fixer] request_id={getattr(e, 'request_id', None)}")
-            print(f"[fixer] response={e.response}")
+            print(f"[judge] APIStatusError: status={e.status_code}")
+            print(f"[judge] request_id={getattr(e, 'request_id', None)}")
+            print(f"[judge] response={e.response}")
             raise
 
         except Exception as e:
-            print(f"[fixer] Unexpected error: {type(e).__name__}: {e}")
+            print(f"[judge] Unexpected error: {type(e).__name__}: {e}")
             traceback.print_exc()
             raise
 
