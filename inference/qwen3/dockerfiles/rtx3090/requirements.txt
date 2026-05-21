@@ -1,0 +1,25 @@
+accelerate==1.9.0
+# deepspeed==0.17.4
+einops==0.8.0
+transformers
+huggingface-hub==0.34.3
+optimum-quanto==0.2.7
+datasets==4.0.0
+omegaconf==2.3.0
+sentencepiece==0.2.0
+opencv-python==4.12.0.88
+matplotlib==3.10.5
+onnxruntime==1.22.1
+# torchvision installed via Dockerfile with correct cu118 wheel (0.21.0)
+peft
+timm==1.0.19
+qwen_vl_utils
+bitsandbytes
+loguru==0.7.3
+diffusers @ git+https://github.com/huggingface/diffusers@7a2b78bf0f788d311cc96b61e660a8e13e3b1e63
+wandb
+# vllm not used in this pipeline
+h5py
+install-playwright
+openai
+scikit-learn

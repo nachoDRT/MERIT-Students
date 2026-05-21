@@ -2,6 +2,7 @@ from transformers import Qwen3VLForConditionalGeneration, AutoProcessor
 from PIL import Image
 from os.path import join
 import os
+import torch
 from openai_client import openaiClient
 import json
 from tqdm import tqdm
@@ -109,7 +110,10 @@ if __name__ == "__main__":
     judge = openaiClient(system_prompt)
 
     model = Qwen3VLForConditionalGeneration.from_pretrained(
-        "Qwen/Qwen3-VL-8B-Instruct", dtype="auto", device_map="auto"
+        "Qwen/Qwen3-VL-8B-Instruct",
+        torch_dtype=torch.float16,
+        device_map="auto",
+        attn_implementation="flash_attention_2"
     )
 
     processor = AutoProcessor.from_pretrained("Qwen/Qwen3-VL-8B-Instruct")
