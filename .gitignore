@@ -4,3 +4,4 @@ src/input
 src/output
 inference/qwen3/data
 inference/qwen3/config
+inference/qwen3/src/experiments/visual/outputs
