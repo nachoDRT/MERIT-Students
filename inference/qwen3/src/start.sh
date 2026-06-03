@@ -40,9 +40,15 @@ case "$STEP" in
   sae_ablation)
     python /app/src/experiments/sae_decomposition/ablation_steering.py
     ;;
+  cache_activations)
+    python /app/src/experiments/sae_decomposition/cache_activations.py
+    ;;
+  analyze_conditions)
+    python /app/src/experiments/sae_decomposition/analyze_conditions.py
+    ;;
   *)
     echo "Unknown PIPELINE_STEP: $STEP"
-    echo "Valid options: students | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation"
+    echo "Valid options: students | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
     exit 1
     ;;
 esac
