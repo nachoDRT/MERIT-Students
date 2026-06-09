@@ -27,7 +27,7 @@ from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
 
 script_dir  = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_dir)
-from sae_module import TopKSAE
+from sae_module import TopKSAE, explained_variance, reconstruction_fidelity
 
 DEVICE      = 'cuda'
 MODEL_NAME  = 'Qwen/Qwen3-VL-8B-Instruct'
@@ -75,11 +75,14 @@ def sae_phase(h_pos, h_neg, meta, layers_to_run):
         with torch.no_grad():
             acts_all  = torch.cat([h_p, h_n], dim=0)
             recon_all = sae(acts_all)
-            residual  = acts_all - recon_all
-            var_explained = (1 - residual.pow(2).sum(-1) / acts_all.pow(2).sum(-1)).mean().item()
+            # Activations here are concentrated (same prompt, only photo differs),
+            # so the centered R² collapses negative — recon_fidelity is the
+            # metric to trust for reconstruction quality. See sae_module docs.
+            var_explained = explained_variance(acts_all, recon_all)
+            recon_fid     = reconstruction_fidelity(acts_all, recon_all)
             cos_sim       = F.cosine_similarity(acts_all, recon_all, dim=-1).mean().item()
             l0_efectivo   = (sae.encode(acts_all, apply_topk=True) > 0).float().sum(-1).mean().item()
-        print(f'  SAE validation: var_explained={var_explained:.4f}  cos_sim={cos_sim:.4f}  L0={l0_efectivo:.1f}')
+        print(f'  SAE recon: fidelity={recon_fid:.4f}  cos_sim={cos_sim:.4f}  R²_centered={var_explained:.2f}  L0={l0_efectivo:.1f}')
 
         with torch.no_grad():
             feat_pos = sae.encode(h_p, apply_topk=True)  # [N, D]
@@ -148,9 +151,10 @@ def sae_phase(h_pos, h_neg, meta, layers_to_run):
             'vector_pair':          VECTOR_PAIR,
             'n_pairs':              int(h_pos.shape[0]),
             'sae_validation':       {
-                'var_explained': round(var_explained, 4),
-                'cos_sim':       round(cos_sim, 4),
-                'l0_efectivo':   round(l0_efectivo, 1),
+                'recon_fidelity': round(recon_fid, 4),
+                'var_explained':  round(var_explained, 4),
+                'cos_sim':        round(cos_sim, 4),
+                'l0_efectivo':    round(l0_efectivo, 1),
             },
             'top_delta_pos':        top_delta_pos,
             'top_delta_neg':        top_delta_neg,

@@ -31,3 +31,45 @@ class TopKSAE(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.decode(self.encode(x))
+
+
+def explained_variance(x: torch.Tensor, x_recon: torch.Tensor) -> float:
+    """Fraction of variance explained (R²), centered per dimension.
+
+    Standard SAE reconstruction metric: 1 − FVU, where
+        FVU = Σ‖x − x̂‖² / Σ‖x − mean(x)‖²
+    and mean(x) is taken per dimension across all samples. Unlike cosine
+    similarity it penalises both direction and scale error.
+
+    Returns 1.0 for perfect reconstruction, 0.0 for predicting the
+    constant mean, and negative values when the reconstruction is worse
+    than that mean.
+
+    NOTE: the baseline is the *mean* vector, so this is only meaningful
+    when the data has real spread (e.g. diverse prompts). For a set of
+    near-identical activations (same prompt, concentrated distribution)
+    the mean is an almost-perfect predictor and this metric collapses to
+    a large negative number even when each activation is reconstructed
+    faithfully — use `reconstruction_fidelity` in that case.
+    """
+    x       = x.reshape(-1, x.shape[-1]).float()
+    x_recon = x_recon.reshape(-1, x_recon.shape[-1]).float()
+    resid_ss = (x - x_recon).pow(2).sum()
+    total_ss = (x - x.mean(dim=0, keepdim=True)).pow(2).sum().clamp(min=1e-12)
+    return float(1.0 - resid_ss / total_ss)
+
+
+def reconstruction_fidelity(x: torch.Tensor, x_recon: torch.Tensor) -> float:
+    """Uncentered fraction explained: 1 − Σ‖x − x̂‖² / Σ‖x‖².
+
+    Baseline is the zero vector instead of the mean, so it measures
+    absolute reconstruction fidelity (direction + magnitude) regardless
+    of how concentrated the dataset is. Appropriate when judging whether
+    individual activations are faithfully reconstructed before trusting
+    their SAE feature decomposition.
+    """
+    x       = x.reshape(-1, x.shape[-1]).float()
+    x_recon = x_recon.reshape(-1, x_recon.shape[-1]).float()
+    resid_ss = (x - x_recon).pow(2).sum()
+    total_ss = x.pow(2).sum().clamp(min=1e-12)
+    return float(1.0 - resid_ss / total_ss)

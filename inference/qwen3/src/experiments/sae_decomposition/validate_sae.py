@@ -25,7 +25,7 @@ from transformers import AutoProcessor, Qwen3VLForConditionalGeneration
 
 script_dir  = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_dir)
-from sae_module import TopKSAE
+from sae_module import TopKSAE, explained_variance, reconstruction_fidelity
 
 DEVICE     = 'cuda'
 MODEL_NAME = 'Qwen/Qwen3-VL-8B-Instruct'
@@ -127,7 +127,8 @@ def main():
 
     acts_cpu = acts.cpu()
     mse          = F.mse_loss(recon, acts_cpu).item()
-    var_expl     = 1.0 - (acts_cpu - recon).var().item() / acts_cpu.var().item()
+    var_expl     = explained_variance(acts_cpu, recon)
+    recon_fid    = reconstruction_fidelity(acts_cpu, recon)
     cos_sim      = F.cosine_similarity(acts_cpu, recon, dim=-1).mean().item()
     l0_effective = (sae.encode(acts_gpu) > 0).float().sum(-1).mean().item()
 
@@ -137,6 +138,7 @@ def main():
         'n_tokens':      int(acts.shape[0]),
         'mse':           round(mse, 6),
         'var_explained': round(var_expl, 4),
+        'recon_fidelity': round(recon_fid, 4),
         'cos_sim':       round(cos_sim, 4),
         'l0_effective':  round(l0_effective, 2),
         'verdict':       (
