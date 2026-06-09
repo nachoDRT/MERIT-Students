@@ -46,9 +46,12 @@ case "$STEP" in
   analyze_conditions)
     python /app/src/experiments/sae_decomposition/analyze_conditions.py
     ;;
+  sae_max_activating)
+    python /app/src/experiments/sae_decomposition/max_activating.py
+    ;;
   *)
     echo "Unknown PIPELINE_STEP: $STEP"
-    echo "Valid options: students | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
+    echo "Valid options: students | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions | sae_max_activating"
     exit 1
     ;;
 esac
