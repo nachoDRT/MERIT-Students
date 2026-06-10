@@ -19,6 +19,9 @@ case "$STEP" in
   visual_extract_student_vectors)
     python /app/src/experiments/visual/extract_student_vectors.py
     ;;
+  extract_filtered_vectors)
+    python /app/src/experiments/visual/extract_filtered_vectors.py
+    ;;
   visual_layer_sweep)
     python /app/src/experiments/visual/layer_sweep.py
     ;;

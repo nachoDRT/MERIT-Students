@@ -80,11 +80,23 @@ def judge_verdict(judge, model_output):
     return bool(parsed["proceed"]), parsed.get("reasoning", "")
 
 
-def load_subject_images(subject, n):
+def load_subject_images(subject, n, verdict_filter='none', bias_dir=None):
+    """Load up to n subject images, optionally filtered by bias-sweep verdict.
+
+    verdict_filter: 'false' -> only proceed=False images, 'true' -> proceed=True,
+                    anything else -> no filtering.
+    """
     path  = os.path.join(DATA_DIR, subject)
     files = sorted(
         f for f in os.listdir(path) if f.lower().endswith(('.jpg', '.jpeg', '.png'))
-    )[:n]
+    )
+    if verdict_filter in ('true', 'false'):
+        want = verdict_filter == 'true'
+        bias_path = os.path.join(bias_dir, f'bias_{subject}.json')
+        labels = {p['image']: p.get('proceed') for p in json.load(open(bias_path))['per_image']}
+        files = [f for f in files if labels.get(f) is want]
+        print(f'  {subject}: verdict_filter=proceed:{want} -> {len(files)} image(s)')
+    files = files[:n]
     imgs  = [(f, Image.open(os.path.join(path, f))) for f in files]
     print(f'  {subject}: {len(imgs)} image(s) — {[f for f, _ in imgs]}')
     return imgs
@@ -104,6 +116,8 @@ def main():
     n_images     = int(os.environ.get('N_IMAGES', '10'))
     beta         = float(os.environ.get('BETA',   '1.0'))
     vector_pair  = os.environ.get('VECTOR_PAIR',  'subject_8_vs_subject_0')
+    verdict_filter = os.environ.get('VERDICT_FILTER', 'none').lower()
+    bias_dir       = os.environ.get('BIAS_RESULTS_DIR', '/app/src/outputs/students_bias')
 
     out_path = output_path(subject, student_name, grade_file, beta, n_images)
     if os.path.exists(out_path):
@@ -141,7 +155,7 @@ def main():
 
     eval_prompt  = build_eval_prompt(student_name)
     grades_image = Image.open(os.path.join(DATA_DIR, 'grades', grade_file))
-    subject_imgs = load_subject_images(subject, n_images)
+    subject_imgs = load_subject_images(subject, n_images, verdict_filter, bias_dir)
 
     layer_results = []
     for layer_idx in range(layer_start, layer_end + 1):
@@ -177,6 +191,7 @@ def main():
             'n_images':     n_images,
             'beta':         beta,
             'vector_pair':  vector_pair,
+            'verdict_filter': verdict_filter,
             'layer_start':  layer_start,
             'layer_end':    layer_end,
         },
