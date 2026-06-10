@@ -6,3 +6,4 @@ inference/qwen3/data
 inference/qwen3/config
 inference/qwen3/src/experiments/visual/outputs
 inference/qwen3/src/experiments/sae_decomposition/outputs
+inference/qwen3/src/outputs
