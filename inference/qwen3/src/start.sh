@@ -31,6 +31,20 @@ case "$STEP" in
   layer_sweep_students)
     python /app/src/experiments/visual/layer_sweep_students.py
     ;;
+  layer_sweep_students_batch)
+    # Run the layer sweep for several subjects in series, each with its own
+    # steering vector (subject_<id>_neg_to_subject_8_pos). Other knobs
+    # (N_IMAGES, BETA, LAYER_START, LAYER_END, VERDICT_FILTER) come from env.
+    for s in ${SUBJECTS:-2 3 7 11 12}; do
+      case "$s" in subject_*) sub="$s";; *) sub="subject_$s";; esac
+      export SUBJECT="$sub"
+      export VECTOR_PAIR="${sub}_neg_to_subject_8_pos"
+      echo "==================================================================="
+      echo "=== layer sweep: $sub  (vector $VECTOR_PAIR) ==="
+      echo "==================================================================="
+      python /app/src/experiments/visual/layer_sweep_students.py
+    done
+    ;;
   plot_activation_norms)
     python /app/src/experiments/visual/plot_activation_norms.py
     ;;
@@ -57,7 +71,7 @@ case "$STEP" in
     ;;
   *)
     echo "Unknown PIPELINE_STEP: $STEP"
-    echo "Valid options: students | plot_bias | classify_gallery | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
+    echo "Valid options: students | plot_bias | classify_gallery | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | layer_sweep_students_batch | extract_filtered_vectors | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
     exit 1
     ;;
 esac
