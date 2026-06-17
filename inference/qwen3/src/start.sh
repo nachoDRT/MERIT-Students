@@ -13,6 +13,9 @@ case "$STEP" in
   classify_gallery)
     python /app/src/classify_gallery.py ${SUBJECTS:-}
     ;;
+  scholarship_bias)
+    python /app/src/experiments/scholarship/scholarship_bias.py
+    ;;
   visual_extract_vectors)
     python /app/src/experiments/visual/extract_vectors.py
     ;;
@@ -71,7 +74,7 @@ case "$STEP" in
     ;;
   *)
     echo "Unknown PIPELINE_STEP: $STEP"
-    echo "Valid options: students | plot_bias | classify_gallery | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | layer_sweep_students_batch | extract_filtered_vectors | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
+    echo "Valid options: students | plot_bias | classify_gallery | scholarship_bias | visual_extract_vectors | visual_extract_student_vectors | visual_layer_sweep | baseline_sweep | layer_sweep_students | layer_sweep_students_batch | extract_filtered_vectors | plot_activation_norms | sae_download | sae_validate | sae_decompose | sae_interpret | sae_ablation | cache_activations | analyze_conditions"
     exit 1
     ;;
 esac
